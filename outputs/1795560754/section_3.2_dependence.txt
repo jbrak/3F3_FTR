@@ -1,0 +1,19 @@
+
+    Null Hypothesis: Consecutive values are independent of one another
+    Alternate Hypothesis: Consecutive values are not independent of one another
+    
+    Note i and j are iterated in this order: dict_values(['N', 'E', 'S', 'W'])
+    
+    M = [[ 0 34 13  5]
+ [ 5  0 40  6]
+ [ 8  6  0 48]
+ [38 11 10  0]]
+    
+    T = [[1.00000000e+00 3.54778147e-08 7.08082127e-01 9.98202611e-01]
+ [9.91361864e-01 1.00000000e+00 4.10831369e-09 9.93221186e-01]
+ [9.73970093e-01 9.95828614e-01 1.00000000e+00 1.33562050e-11]
+ [7.33827976e-09 7.91831195e-01 9.72355211e-01 1.00000000e+00]]
+
+    Thus the value of t/16 to reject H0 = 1.3356205030845558e-11
+    Thus the Value of t to reject H0 = 2.1369928049352893e-10
+    

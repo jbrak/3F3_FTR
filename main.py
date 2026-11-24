@@ -177,7 +177,7 @@ with open(OUTPUT_PATH + "/section_3.1_IID_uniform.txt","w") as f:
     Symbol : Nsymbol : Tail Probability
     {str1}
     
-    Thus the value of t/4 to reject H0 = {t_reject/4}
+    Thus the value of t/{symbols_num} to reject H0 = {t_reject/symbols_num}
     Thus the Value of t to reject H0 = {t_reject}
     """)
 
@@ -186,6 +186,9 @@ print(f"🟢 SECTION 3.1 TESTING FOR UNIFORM IID: section_3.1_IID_uniform.txt")
 ##################################################################################################################
 # SECTION 3.2
 # Testing for pair dependence
+
+# Null Hypothesis: Consecutive values are independent of one another
+# Alternate Hypothesis: Consecutive values are not independent of one another
 
 # Calculate the matrix M, which tracks how many times we transition from state i -> state j
 
@@ -244,7 +247,30 @@ for i in range(symbols_num):
     for j in range(symbols_num):
         T_matrix[i,j] = binom_tail(M_matrix[i,j], total-1, r[i] * c[j])
 
-print(T_matrix)
+# print(T_matrix)
+# print(T_matrix.min())
+
+# Compute the value of t required to reject the null hypothesis
+t_reject = T_matrix.min() * (symbols_num)**2
+
+with open(OUTPUT_PATH + "/section_3.2_dependence.txt", "w") as f:
+    f.write(f"""
+    Null Hypothesis: Consecutive values are independent of one another
+    Alternate Hypothesis: Consecutive values are not independent of one another
+    
+    Note i and j are iterated in this order: {list(symbols.values())}
+    
+    M = 
+{M_matrix}
+    
+    T = 
+{T_matrix}
+
+    Thus the value of t/{symbols_num**2} to reject H0 = {t_reject / symbols_num**2}
+    Thus the Value of t to reject H0 = {t_reject}
+    """)
+
+print(f"🟢 SECTION 3.2 TESTING FOR DEPENDENCE: section_3.2_dependence.txt")
 
 ##################################################################################################################
 plt.show()
