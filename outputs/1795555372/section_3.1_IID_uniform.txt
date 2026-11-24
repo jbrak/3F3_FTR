@@ -1,0 +1,16 @@
+
+    Null Hypothesis: Each symbol is distributed according to a uniform IID distribution, Nsymbol ~ B(N,p)
+    Alternative Hypothesis: Each symbol is not distributed according to a uniform IID distribution
+    
+    N = 225
+    p = 0.25
+    
+    Symbol : Nsymbol : Tail Probability
+    N : 52:0.7658412391599383
+    E : 51:0.8112566774812224
+    S : 63:0.16767543418848685
+    W : 59:0.360328127140511
+    
+    Thus the value of t/4 to reject H0 = 0.16767543418848685
+    Thus the Value of t to reject H0 = 0.6707017367539474
+    

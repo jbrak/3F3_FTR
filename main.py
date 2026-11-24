@@ -20,6 +20,7 @@ Path(OUTPUT_PATH).mkdir()
 print(f"Output path: {OUTPUT_PATH}")
 
 ##################################################################################################################
+# IMPORTING DATA
 # Extract raw data from the file
 
 with open(DATA_PATH,"r") as f:
@@ -41,7 +42,10 @@ with open(DATA_PATH,"r") as f:
     #print(data)
     #print(symbols)
 
+print("🔴 IMPORTING DATA: Successfully Imported Data")
+
 ##################################################################################################################
+# VALIDATING DATA
 # Validate the data set and symbols
 
 count = 0
@@ -62,6 +66,8 @@ if count != len(data):
     There is a symbol not present in the prefix
 """))
 
+print("🔴 VALIDATING DATA: Successfully Validated Data")
+
 ##################################################################################################################
 # Produce the array in different data structures for convenience
 
@@ -76,6 +82,11 @@ data_int = np.int64(data_np)
 # Key is the symbol as present in data object not the mapping
 count_symbols = {i : data_lst.count(i) for i in symbols.keys()}
 
+# Total number of datapoints
+total = len(data_lst)
+
+symbols_num = len(symbols)
+
 ##################################################################################################################
 # SECTION 1
 # Plot a histogram of each state's frequncies
@@ -86,7 +97,7 @@ plt.xlabel("Symbol")
 plt.ylabel("Count")
 
 plt.savefig(OUTPUT_PATH + "/section_1_histogram.pdf")
-print("🟢 SECTION 1 HISTOGRAM: section_1_histogram.pdf")
+print("🟠 SECTION 1 HISTOGRAM: section_1_histogram.pdf")
 
 ##################################################################################################################
 # SECTION 2.1
@@ -132,7 +143,108 @@ assert binom_tail(0,2,0.5) == 1.0
 assert binom_tail(1,2,0.5) == 0.75
 assert binom_tail(2,2,0.5) == 0.25
 
-print("🟠 SECTION 2.1 BINOMIAL TAIL FUNCTION: Assertions Passed")
+print("🟡 SECTION 2.1 BINOMIAL TAIL FUNCTION: Assertions Passed")
+
+##################################################################################################################
+# SECTION 3.1
+# Testing the data for IID Uniform
+
+# Assume each symbol is equally likely
+p = 1/symbols_num
+
+# Null Hypothesis: We assume a binomial model of B(total, p) for the number of each symbol
+# Compute the tail_probabilities for each symbol according to this model
+tail_probabilities = {key : binom_tail(item, total, p) for key, item in count_symbols.items()}
+
+# Calculate the required value of t for us to reject the null hypothesis
+t_reject = min(tail_probabilities.values()) * 4
+
+# print(p)
+# print(tail_probabilities)
+# print(t_reject)
+
+with open(OUTPUT_PATH + "/section_3.1_IID_uniform.txt","w") as f:
+
+    str1 = "\n    ".join([f"{str(symbols[key]) + " : " + str(item) + " : " + str(tail_probabilities[key])}" for key, item in count_symbols.items()])
+
+    f.write(f"""
+    Null Hypothesis: Each symbol is distributed according to a uniform IID distribution, Nsymbol ~ B(N,p)
+    Alternative Hypothesis: Each symbol is not distributed according to a uniform IID distribution
+    
+    N = {total}
+    p = {p}
+    
+    Symbol : Nsymbol : Tail Probability
+    {str1}
+    
+    Thus the value of t/4 to reject H0 = {t_reject/4}
+    Thus the Value of t to reject H0 = {t_reject}
+    """)
+
+print(f"🟢 SECTION 3.1 TESTING FOR UNIFORM IID: section_3.1_IID_uniform.txt")
+
+##################################################################################################################
+# SECTION 3.2
+# Testing for pair dependence
+
+# Calculate the matrix M, which tracks how many times we transition from state i -> state j
+
+# M_symbols is the matrix represented as a dictionary for easy assignment in the form of:
+# M_symbols[i][j] = Mij
+M_symbols = {key1 : {key2 : 0 for key2 in symbols.keys()} for key1 in symbols.keys()}
+
+# Numpy Matrix form, rather than dictionary lookup form
+M_matrix = np.zeros((symbols_num, symbols_num))
+
+# print(M)
+
+# Create lists to represent the data at the current time step and one time step into the future
+data_np_t = np.copy(data_np)[:-1]
+data_np_t_p1 = np.copy(data_np)[1:]
+
+# print(data_np)
+# print(data_np_t)
+# print(data_np_t_p1)
+
+# Generate M_symbols
+for i in range(len(data_np_t)):
+    M_symbols[data_np_t[i]][data_np_t_p1[i]] += 1
+
+#print(M_symbols)
+
+# Map the lookup dictionary representation of M to a Numpy array
+for i in range(symbols_num):
+    for j in range(symbols_num):
+        M_matrix[i,j] = list(list(M_symbols.values())[i].values())[j]
+
+# Convert floats to integers
+M_matrix = np.int64(M_matrix)
+
+# print(M_matrix)
+
+# There is 1 less transition than there is symbols, so this acts as a quick check
+assert M_matrix.sum() == total - 1
+
+one_vector = np.ones(symbols_num)
+
+# compute the values of the vectors r and c
+# M_matrix @ one_vector sums up the rows
+r = (M_matrix @ one_vector)/(total-1)
+# one_vector @ M_matrix sums up the columns
+c = (one_vector @ M_matrix)/(total-1)
+
+# print(r)
+# print(c)
+# print(M_matrix)
+
+# Create a 0 matrix for tail probabilities
+T_matrix = np.zeros((symbols_num, symbols_num))
+
+for i in range(symbols_num):
+    for j in range(symbols_num):
+        T_matrix[i,j] = binom_tail(M_matrix[i,j], total-1, r[i] * c[j])
+
+print(T_matrix)
 
 ##################################################################################################################
 plt.show()
