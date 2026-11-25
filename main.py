@@ -17,7 +17,7 @@ DATA_PATH = f"raw.txt"
 # Create filepath to store the figures in
 
 Path(OUTPUT_PATH).mkdir()
-print(f"Output path: {OUTPUT_PATH}")
+print(f"🔴 OUTPUT PATH: {OUTPUT_PATH}")
 
 ##################################################################################################################
 # IMPORTING DATA
@@ -421,12 +421,16 @@ def autocorrelation(k):
     # Define complex symbols at t = t
     z = np.array([np.exp(1j * 2*np.pi*i/symbols_num) for i in range(symbols_num)])
 
+    # Calculat the stationay distribution
     stationary = find_stationary_dist()
 
+    # Raise Q to the power of k
     Q_k_matrix = np.linalg.matrix_power(Q_matrix, k)
 
+    # Set initially to 0
     r = 0
 
+    # Compute autocorrelation iterativly
     for i in range(symbols_num):
         ej = 0
         for j in range(symbols_num):
@@ -445,7 +449,7 @@ assert np.round(autocorrelation(0),10) == 1
 
 # Now lets compute the empirical autocorrelation
 # Define a list of different delays
-k = range(5)
+k = range(6)
 
 # Generate the complex symbols
 complex_symbols = {i[1] : np.exp(1j * 2*np.pi*i[0]/symbols_num) for i in enumerate(symbols.keys())}
@@ -474,12 +478,16 @@ for i in k:
 
     # print(data_np_t_pk)
 
+    # Compute the product of Xt and Xt+k* at each timestep
     r_emp_data[i] = np.conj(data_np_t_pk) * data_np_t
+
+    # Average across the entire time
     r_emp[i] = (r_emp_data[i].sum())/len(r_emp_data[i])
 
     # print(data_np_t)
     # print(data_np_t_pk)
 
+    # Compute the model's predicted value
     r_auto[i] = autocorrelation(i)
 
     # plt.figure()
@@ -488,20 +496,21 @@ for i in k:
     # plt.scatter(range(len(r_emp[i])), abs(r_emp[i]))
     # plt.plot(range(len(r_emp[i])),[r_auto.imag for i in range(len(r_emp[i]))])
 
-    print(r_emp[i], r_auto)
+    # print(r_emp[i], r_auto)
 
-
+# Convert from dictionaries to numpy arrays for easy plotting
 r_emp_plot = np.array(list(r_emp.values()))
 r_auto_plot = np.array(list(r_auto.values()))
 
-print(np.array(list(r_emp.values())).imag)
+# print(np.array(list(r_emp.values())).imag)
 
+# Produce a graph plotting the empirically calcualted autocorrelation against
+# the predicted value from the model for diferent valus of k
+# Plot Real, Imaginary, Modulous and Argument form for each graph
 fig, ax = plt.subplots(2,2)
 
-fig.tight_layout(h_pad=3)
-
-ax[0,0].scatter(k, r_emp_plot.real, color = "red")
-ax[0,0].plot(k, r_auto_plot.real)
+ax[0,0].scatter(k, r_emp_plot.real, color = "red", label = "Empirical Data")
+ax[0,0].plot(k, r_auto_plot.real, label = "Model")
 ax[0,0].set_xlabel("k")
 ax[0,0].set_ylabel(r"$\Re \left[ r(k) \right]$")
 
@@ -519,6 +528,48 @@ ax[1,1].scatter(k, np.angle(r_emp_plot), color = "red")
 ax[1,1].plot(k, np.angle(r_auto_plot))
 ax[1,1].set_xlabel("k")
 ax[1,1].set_ylabel(r"$ \arg \left[ r(k) \right]$")
+
+fig.tight_layout(pad = 3)
+fig.legend(loc ='upper center', ncol = 2)
+fig.savefig(OUTPUT_PATH + "/section_4.1_autocorrelation.pdf")
+
+# Write the results to a text file for storage
+with open(OUTPUT_PATH + "/section_4.1_autocorrelation.txt", "w") as f:
+    full = ""
+    real = ""
+    imagi = ""
+    mod = ""
+    argu = ""
+
+    for i in k:
+        full += f"{i} : {r_auto[i]} : {r_emp[i]}\n        "
+        real += f"{i} : {r_auto[i].real} : {r_emp[i].real}\n        "
+        imagi += f"{i} : {r_auto[i].imag} : {r_emp[i].imag}\n        "
+        mod += f"{i} : {abs(r_auto[i])} : {abs(r_emp[i])}\n        "
+        argu += f"{i} : {np.angle(r_auto[i])} : {np.angle(r_emp[i].imag)}\n        "
+
+
+    f.write(f"""
+        Comparing the Autocorrelation of the model to the empirical value from the data for different timesteps
+        
+        Full Complex Number:
+        k : Prediction from the Model : Empirical Value
+        {full}
+        Real Component:
+        k : Prediction from the Model : Empirical Value
+        {real}
+        Imaginary Component:
+        k : Prediction from the Model : Empirical Value
+        {imagi}
+        Magnitude:
+        k : Prediction from the Model : Empirical Value
+        {mod}
+        Argument:
+        k : Prediction from the Model : Empirical Value
+        {argu}
+        """)
+
+print(f"🔵 SECTION 4.0 FITTING MARKOV MODEL: section_4.1_autocorrelation[.pdf,.txt]")
 
 ##################################################################################################################
 plt.show()
