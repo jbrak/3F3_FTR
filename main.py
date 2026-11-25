@@ -317,7 +317,7 @@ t_reject = min(t_rejects.values())
 
 # print(t_reject)
 
-with open(OUTPUT_PATH + "/section_3.3_dependence.txt", "w") as f:
+with open(OUTPUT_PATH + "/section_3.3_markov.txt", "w") as f:
     str1 = ""
 
     for i in symbols.keys():
@@ -345,7 +345,7 @@ with open(OUTPUT_PATH + "/section_3.3_dependence.txt", "w") as f:
         """)
 
 
-print(f"🟢 SECTION 3.3 TESTING FOR MARKOVIAN PROPERTY: section_3.3markov.txt")
+print(f"🟢 SECTION 3.3 TESTING FOR MARKOVIAN PROPERTY: section_3.3_markov.txt")
 
 ##################################################################################################################
 # SECTION 4.0
@@ -353,7 +353,7 @@ print(f"🟢 SECTION 3.3 TESTING FOR MARKOVIAN PROPERTY: section_3.3markov.txt")
 
 Q_matrix = np.float64(np.copy(M_matrix))
 
-print(Q_matrix)
+# print(Q_matrix)
 # print(Q_matrix[:,1])
 # print(Q_matrix[1,:])
 
@@ -369,7 +369,21 @@ for i in range(symbols_num):
 
     # print(Q_matrix[:, i])
 
-print(Q_matrix)
+#print(Q_matrix)
+
+with open(OUTPUT_PATH + "/section_4.0_markov_fit.txt", "w") as f:
+    f.write(f"""
+    We fit the Markove model by dividing the number of times Xt+1 = j and Xt = i and dividing by the number of times
+    that Xt = i, i.e. Qij = Mij / sum over i (Mij)
+    
+    Note i and j are iterated in this order: {list(symbols.values())}
+    
+    Fitted Markov Model:
+    Q = 
+{Q_matrix}
+    """)
+
+print(f"🔵 SECTION 4.0 FITTING MARKOV MODEL: section_4.0_markov_fit.txt")
 
 ##################################################################################################################
 #plt.show()

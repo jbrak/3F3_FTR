@@ -1,0 +1,13 @@
+
+    We fit the Markove model by dividing the number of times Xt+1 = j and Xt = i and dividing by the number of times
+    that Xt = i, i.e. Qij = Mij / sum over i (Mij)
+    
+    Note i and j are iterated in this order: ['N', 'E', 'S', 'W']
+    
+    Fitted Markov Model:
+    Q = 
+[[0.         0.66666667 0.20634921 0.08474576]
+ [0.09803922 0.         0.63492063 0.10169492]
+ [0.15686275 0.11764706 0.         0.81355932]
+ [0.74509804 0.21568627 0.15873016 0.        ]]
+    
