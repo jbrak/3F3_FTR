@@ -196,9 +196,6 @@ print(f"🟢 SECTION 3.1 TESTING FOR UNIFORM IID: section_3.1_IID_uniform.txt")
 # M_symbols[i][j] = Mij
 M_symbols = {key1 : {key2 : 0 for key2 in symbols.keys()} for key1 in symbols.keys()}
 
-# Numpy Matrix form, rather than dictionary lookup form
-M_matrix = np.zeros((symbols_num, symbols_num))
-
 # print(M)
 
 # Create lists to represent the data at the current time step and one time step into the future
@@ -215,43 +212,52 @@ for i in range(len(data_np_t)):
 
 #print(M_symbols)
 
-# Map the lookup dictionary representation of M to a Numpy array
-for i in range(symbols_num):
-    for j in range(symbols_num):
-        M_matrix[i,j] = list(list(M_symbols.values())[i].values())[j]
+# Create a function that can be reused in section 3.3
+def pair_dependence_test(M_symbols):
+    # Numpy Matrix form, rather than dictionary lookup form
+    M_matrix = np.zeros((symbols_num, symbols_num))
 
-# Convert floats to integers
-M_matrix = np.int64(M_matrix)
+    # Map the lookup dictionary representation of M to a Numpy array
+    for i in range(symbols_num):
+        for j in range(symbols_num):
+            M_matrix[i,j] = list(list(M_symbols.values())[i].values())[j]
 
-# print(M_matrix)
+    # Convert floats to integers
+    M_matrix = np.int64(M_matrix)
+
+    # print(M_matrix)
+
+    one_vector = np.ones(symbols_num)
+
+    # compute the values of the vectors r and c
+    # M_matrix @ one_vector sums up the rows
+    r = (M_matrix @ one_vector)/(total-1)
+    # one_vector @ M_matrix sums up the columns
+    c = (one_vector @ M_matrix)/(total-1)
+
+    # print(r)
+    # print(c)
+    # print(M_matrix)
+
+    # Create a 0 matrix for tail probabilities
+    T_matrix = np.zeros((symbols_num, symbols_num))
+
+    for i in range(symbols_num):
+        for j in range(symbols_num):
+            T_matrix[i,j] = binom_tail(M_matrix[i,j], total-1, r[i] * c[j])
+
+    # print(T_matrix)
+    # print(T_matrix.min())
+
+    # Compute the value of t required to reject the null hypothesis
+    t_reject = T_matrix.min() * (symbols_num)**2
+
+    return M_matrix, T_matrix, t_reject
+
+M_matrix, T_matrix, t_reject = pair_dependence_test(M_symbols)
 
 # There is 1 less transition than there is symbols, so this acts as a quick check
 assert M_matrix.sum() == total - 1
-
-one_vector = np.ones(symbols_num)
-
-# compute the values of the vectors r and c
-# M_matrix @ one_vector sums up the rows
-r = (M_matrix @ one_vector)/(total-1)
-# one_vector @ M_matrix sums up the columns
-c = (one_vector @ M_matrix)/(total-1)
-
-# print(r)
-# print(c)
-# print(M_matrix)
-
-# Create a 0 matrix for tail probabilities
-T_matrix = np.zeros((symbols_num, symbols_num))
-
-for i in range(symbols_num):
-    for j in range(symbols_num):
-        T_matrix[i,j] = binom_tail(M_matrix[i,j], total-1, r[i] * c[j])
-
-# print(T_matrix)
-# print(T_matrix.min())
-
-# Compute the value of t required to reject the null hypothesis
-t_reject = T_matrix.min() * (symbols_num)**2
 
 with open(OUTPUT_PATH + "/section_3.2_dependence.txt", "w") as f:
     f.write(f"""
@@ -270,7 +276,99 @@ with open(OUTPUT_PATH + "/section_3.2_dependence.txt", "w") as f:
     Thus the Value of t to reject H0 = {t_reject}
     """)
 
-print(f"🟢 SECTION 3.2 TESTING FOR DEPENDENCE: section_3.2_dependence.txt")
+print(f"🟢 SECTION 3.2 TESTING FOR PAIR DEPENDENCE: section_3.2_dependence.txt")
+##################################################################################################################
+# SECTION 3.3
+# Testing for Markovian Property
+
+# Null Hypothesis: Proccess has Markovian Property
+# Alternate Hypothesis: Proccess does not have Markovian Property
+
+# Create numpy arrays corresponding to t-1, t and t+1
+data_np_t_m1 = np.copy(data_np)[:-2]
+data_np_t = np.copy(data_np)[1:-1]
+data_np_t_p1 = np.copy(data_np)[2:]
+
+# print(data_np_t_m1)
+# print(data_np_t)
+# print(data_np_t_p1)
+
+# L_symbols is the matrix represented as a dictionary for easy assignment in the form of:
+# L_symbols[xt][i][j] = Lij
+L_symbols = {key : {key1 : {key2 : 0 for key2 in symbols.keys()} for key1 in symbols.keys()} for key in symbols.keys()}
+
+# Numpy forms of the matrix L
+L_matrices = {}
+T_matrices = {}
+t_rejects = {}
+
+for i in range(len(data_np_t)):
+    L_symbols[data_np_t[i]][data_np_t_m1[i]][data_np_t_p1[i]] += 1
+
+# print(L_symbols)
+
+# Iterate over all the keys and generate the relevent matrices and significance values
+for key in symbols.keys():
+    L_matrices[key], T_matrices[key], t_rejects[key] = pair_dependence_test(L_symbols[key])
+    # print(L_matrices[key], "\n", T_matrices[key],"\n", t_rejects[key])
+
+# Find the minimum value of t required to reject the null hypothesis
+t_reject = min(t_rejects.values())
+
+# print(t_reject)
+
+with open(OUTPUT_PATH + "/section_3.3_dependence.txt", "w") as f:
+    str1 = ""
+
+    for i in symbols.keys():
+        str1 += f"""
+        Symbol : {symbols[i]}
+        ------
+        L = 
+{L_matrices[i]}
+
+        T = 
+{T_matrices[i]}
+
+        t_reject/{symbols_num ** 2} = {t_rejects[i] / symbols_num ** 2}
+        t_reject = {t_rejects[i]}
+"""
+
+    f.write(f"""
+        Null Hypothesis: Proccess has Markovian Property
+        Alternate Hypothesis: Proccess does not have Markovian Property
+
+        Note i and j are iterated in this order: {list(symbols.values())}
+        {str1}
+        Thus the value of t/{symbols_num ** 2} to reject H0 = {t_reject / symbols_num ** 2}
+        Thus the Value of t to reject H0 = {t_reject}
+        """)
+
+
+print(f"🟢 SECTION 3.3 TESTING FOR MARKOVIAN PROPERTY: section_3.3markov.txt")
 
 ##################################################################################################################
-plt.show()
+# SECTION 4.0
+# Fitting a Markov Model
+
+Q_matrix = np.float64(np.copy(M_matrix))
+
+print(Q_matrix)
+# print(Q_matrix[:,1])
+# print(Q_matrix[1,:])
+
+one_vector = np.ones(symbols_num)
+
+for i in range(symbols_num):
+    # print(Q_matrix[:, i] @ one_vector)
+    # print(Q_matrix[:, i])
+    # print(Q_matrix[:,i] / (Q_matrix[:,i] @ one_vector))
+
+    Q_matrix[:,i] = Q_matrix[:,i] / (Q_matrix[:,i] @ one_vector)
+
+    # print(Q_matrix[:, i])
+
+print(Q_matrix)
+
+##################################################################################################################
+#plt.show()
