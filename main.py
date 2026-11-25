@@ -364,6 +364,7 @@ for i in range(symbols_num):
     # print(Q_matrix[:, i])
     # print(Q_matrix[:,i] / (Q_matrix[:,i] @ one_vector))
 
+    # Calcualates the model by dividing each entry in the M matrix by the sum of its column
     Q_matrix[:,i] = Q_matrix[:,i] / (Q_matrix[:,i] @ one_vector)
 
     # print(Q_matrix[:, i])
