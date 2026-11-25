@@ -364,8 +364,8 @@ for i in range(symbols_num):
     # print(Q_matrix[:, i])
     # print(Q_matrix[:,i] / (Q_matrix[:,i] @ one_vector))
 
-    # Calcualates the model by dividing each entry in the M matrix by the sum of its column
-    Q_matrix[:,i] = Q_matrix[:,i] / (Q_matrix[:,i] @ one_vector)
+    # Calcualates the model by dividing each entry in the M matrix by the sum of its row
+    Q_matrix[i] = Q_matrix[i] / (Q_matrix[i] @ one_vector)
 
     # print(Q_matrix[:, i])
 
@@ -373,7 +373,7 @@ for i in range(symbols_num):
 
 with open(OUTPUT_PATH + "/section_4.0_markov_fit.txt", "w") as f:
     f.write(f"""
-    We fit the Markove model by dividing the number of times Xt+1 = j and Xt = i and dividing by the number of times
+    We fit the Markov model by dividing the number of times Xt+1 = j and Xt = i and dividing by the number of times
     that Xt = i, i.e. Qij = Mij / sum over i (Mij)
     
     Note i and j are iterated in this order: {list(symbols.values())}
@@ -384,6 +384,141 @@ with open(OUTPUT_PATH + "/section_4.0_markov_fit.txt", "w") as f:
     """)
 
 print(f"🔵 SECTION 4.0 FITTING MARKOV MODEL: section_4.0_markov_fit.txt")
+##################################################################################################################
+# SECTION 4.1
+# Testing Autocorrelation Predictions
+
+# Find the stationary distribution by solving the eigenvector problem
+# Stationary distribution is the normalized eigenvalue corresponding to the unit eigenvector
+def find_stationary_dist():
+
+    # Compute eigenvalues and eigenvectors
+    # Need to transpose the matrix because currently rows indicate prev. state and columns indicate next state
+    # We want the opposite
+    eig = np.linalg.eig(Q_matrix.T)
+    eigenvalues = eig.eigenvalues
+
+    # print(eigenvalues)
+    # print(eig.eigenvectors)
+
+    # Identifiy index of unit eigeinvalue, raise an error if one is not present
+    for i in range(len(eigenvalues)):
+        if np.round(eigenvalues[i],5) == 1:
+            index = i
+            break
+    else:
+        raise (ValueError("Transition Matrix does not have a unit eigenvalue"))
+
+    # Identifiy corresponding eigenvector
+    stationary = eig.eigenvectors[:,index]
+    # print(stationary)
+
+    # Normalize so it has unit sum
+    return (stationary / stationary.sum()).real
+
+
+def autocorrelation(k):
+    # Define complex symbols at t = t
+    z = np.array([np.exp(1j * 2*np.pi*i/symbols_num) for i in range(symbols_num)])
+
+    stationary = find_stationary_dist()
+
+    Q_k_matrix = np.linalg.matrix_power(Q_matrix, k)
+
+    r = 0
+
+    for i in range(symbols_num):
+        ej = 0
+        for j in range(symbols_num):
+            ej += np.conj(z[j]) * Q_k_matrix[i,j]
+
+        r += z[i] * stationary[i] * ej
+
+    return r
+
+# Validation check to ensure it is behaving as expected
+assert np.round(autocorrelation(0),10) == 1
+
+# print(find_stationary_dist())
+# print(autocorrelation(0))
+# print(autocorrelation(1))
+
+# Now lets compute the empirical autocorrelation
+# Define a list of different delays
+k = range(5)
+
+# Generate the complex symbols
+complex_symbols = {i[1] : np.exp(1j * 2*np.pi*i[0]/symbols_num) for i in enumerate(symbols.keys())}
+
+# Create an empty array with complex symbols rarther than those from the file
+data_np_complex = np.zeros(total, np.complex128)
+
+# print(len(data_np_complex))
+
+# Populate the complex array
+for key,item in complex_symbols.items():
+    data_np_complex[data_np == key] = item
+
+# print(data_np_complex)
+
+# Create a dictionary to the store E[Xt Xt+k*] for each delay
+r_emp_data = {}
+r_emp = {}
+r_auto = {}
+
+for i in k:
+
+    # Create arrays for data_np and data_np a time step of k in the past
+    data_np_t = data_np_complex[:-i] if i > 0 else data_np_complex
+    data_np_t_pk = data_np_complex[i:]
+
+    # print(data_np_t_pk)
+
+    r_emp_data[i] = np.conj(data_np_t_pk) * data_np_t
+    r_emp[i] = (r_emp_data[i].sum())/len(r_emp_data[i])
+
+    # print(data_np_t)
+    # print(data_np_t_pk)
+
+    r_auto[i] = autocorrelation(i)
+
+    # plt.figure()
+    # plt.scatter(x=range(len(r_emp[i])),y=r_emp[i].real)
+    # plt.scatter(x=range(len(r_emp[i])),y=r_emp[i].imag)
+    # plt.scatter(range(len(r_emp[i])), abs(r_emp[i]))
+    # plt.plot(range(len(r_emp[i])),[r_auto.imag for i in range(len(r_emp[i]))])
+
+    print(r_emp[i], r_auto)
+
+
+r_emp_plot = np.array(list(r_emp.values()))
+r_auto_plot = np.array(list(r_auto.values()))
+
+print(np.array(list(r_emp.values())).imag)
+
+fig, ax = plt.subplots(2,2)
+
+fig.tight_layout(h_pad=3)
+
+ax[0,0].scatter(k, r_emp_plot.real, color = "red")
+ax[0,0].plot(k, r_auto_plot.real)
+ax[0,0].set_xlabel("k")
+ax[0,0].set_ylabel(r"$\Re \left[ r(k) \right]$")
+
+ax[1,0].scatter(k, r_emp_plot.imag, color = "red")
+ax[1,0].plot(k, r_auto_plot.imag)
+ax[1,0].set_xlabel("k")
+ax[1,0].set_ylabel(r"$\Im \left[ r(k) \right]$")
+
+ax[0,1].scatter(k, abs(r_emp_plot), color = "red")
+ax[0,1].plot(k, abs(r_auto_plot))
+ax[0,1].set_xlabel("k")
+ax[0,1].set_ylabel(r"$\left| r(k) \right|$")
+
+ax[1,1].scatter(k, np.angle(r_emp_plot), color = "red")
+ax[1,1].plot(k, np.angle(r_auto_plot))
+ax[1,1].set_xlabel("k")
+ax[1,1].set_ylabel(r"$ \arg \left[ r(k) \right]$")
 
 ##################################################################################################################
-#plt.show()
+plt.show()
