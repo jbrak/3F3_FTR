@@ -548,7 +548,7 @@ with open(OUTPUT_PATH + "/section_4.1_autocorrelation.txt", "w") as f:
         real += f"{i} : {r_auto[i].real} : {r_emp[i].real}\n        "
         imagi += f"{i} : {r_auto[i].imag} : {r_emp[i].imag}\n        "
         mod += f"{i} : {abs(r_auto[i])} : {abs(r_emp[i])}\n        "
-        argu += f"{i} : {np.angle(r_auto[i])} : {np.angle(r_emp[i].imag)}\n        "
+        argu += f"{i} : {np.angle(r_auto[i])} : {np.angle(r_emp[i])}\n        "
 
 
     f.write(f"""
