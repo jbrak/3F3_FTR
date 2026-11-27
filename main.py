@@ -454,6 +454,8 @@ k = range(6)
 # Generate the complex symbols
 complex_symbols = {i[1] : np.exp(1j * 2*np.pi*i[0]/symbols_num) for i in enumerate(symbols.keys())}
 
+# print(complex_symbols)
+
 # Create an empty array with complex symbols rarther than those from the file
 data_np_complex = np.zeros(total, np.complex128)
 
@@ -509,7 +511,7 @@ r_auto_plot = np.array(list(r_auto.values()))
 # Plot Real, Imaginary, Modulous and Argument form for each graph
 fig, ax = plt.subplots(2,2)
 
-ax[0,0].scatter(k, r_emp_plot.real, color = "red", label = "Empirical Data")
+ax[0,0].scatter(k, r_emp_plot.real, color = "red", label = "Empirical")
 ax[0,0].plot(k, r_auto_plot.real, label = "Model")
 ax[0,0].set_xlabel("k")
 ax[0,0].set_ylabel(r"$\Re \left[ r(k) \right]$")
