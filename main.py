@@ -313,7 +313,7 @@ for key in symbols.keys():
     # print(L_matrices[key], "\n", T_matrices[key],"\n", t_rejects[key])
 
 # Find the minimum value of t required to reject the null hypothesis
-t_reject = min(t_rejects.values())
+t_reject = min(t_rejects.values())*symbols_num
 
 # print(t_reject)
 
@@ -330,8 +330,8 @@ with open(OUTPUT_PATH + "/section_3.3_markov.txt", "w") as f:
         T = 
 {T_matrices[i]}
 
-        t_reject/{symbols_num ** 2} = {t_rejects[i] / symbols_num ** 2}
-        t_reject = {t_rejects[i]}
+        t_reject/{symbols_num ** 3} = {t_rejects[i] / symbols_num ** 2}
+        t_reject = {t_rejects[i]*symbols_num}
 """
 
     f.write(f"""
@@ -340,7 +340,7 @@ with open(OUTPUT_PATH + "/section_3.3_markov.txt", "w") as f:
 
         Note i and j are iterated in this order: {list(symbols.values())}
         {str1}
-        Thus the value of t/{symbols_num ** 2} to reject H0 = {t_reject / symbols_num ** 2}
+        Thus the value of t/{symbols_num ** 3} to reject H0 = {t_reject / symbols_num ** 3}
         Thus the Value of t to reject H0 = {t_reject}
         """)
 
